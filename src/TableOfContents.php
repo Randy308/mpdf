@@ -453,42 +453,68 @@ class TableOfContents
 				}, $tocClassClone->mpdf->PageNumSubstitutions);
 			}
 
+			$batchSize = 500;
 			// mPDF 5.6.31
 			$tocstart = count($this->mpdf->pages);
+			
 			if (isset($toc_preHTML) && $toc_preHTML) {
-				$this->mpdf->WriteHTML($toc_preHTML);
+			    $this->mpdf->WriteHTML($toc_preHTML);
 			}
-
+			
 			// mPDF 5.6.19
-			$html = '<div class="mpdf_toc" id="mpdf_toc_' . $toc_id . '">';
-			foreach ($this->_toc as $t) {
-				if ($t['toc_id'] === '_mpdf_all' || $t['toc_id'] === $toc_id) {
-					$html .= '<div class="mpdf_toc_level_' . $t['l'] . '">';
-					if ($TOCuseLinking) {
-						$html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_' . $t['link'] . '">';
-					}
-					$html .= '<span class="mpdf_toc_t_level_' . $t['l'] . '">' . $t['t'] . '</span>';
-					if ($TOCuseLinking) {
-						$html .= '</a>';
-					}
-					if (!$tocoutdent) {
-						$tocoutdent = '0';
-					}
-					if ($TOCusePaging) {
-						$html .= ' <dottab outdent="' . $tocoutdent . '" /> ';
-						if ($TOCuseLinking) {
-							$html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_' . $t['link'] . '">';
-						}
-						$html .= '<span class="mpdf_toc_p_level_' . $t['l'] . '">' . $this->mpdf->docPageNum($t['p']) . '</span>';
-						if ($TOCuseLinking) {
-							$html .= '</a>';
-						}
-					}
-					$html .= '</div>';
-				}
+			$this->mpdf->WriteHTML('<div class="mpdf_toc" id="mpdf_toc_' . $toc_id . '">');
+			
+			$chunks = array_chunk($this->_toc, $batchSize);
+
+			foreach ($chunks as $chunk) {
+			
+			    $html = '';
+			
+			    foreach ($chunk as $t) {
+			        if ($t['toc_id'] === '_mpdf_all' || $t['toc_id'] === $toc_id) {
+			
+			            $html .= '<div class="mpdf_toc_level_' . $t['l'] . '">';
+			
+			            // Enlace
+			            if ($TOCuseLinking) {
+			                $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_' . $t['link'] . '">';
+			            }
+			
+			            // Título
+			            $html .= '<span class="mpdf_toc_t_level_' . $t['l'] . '">' . $t['t'] . '</span>';
+			
+			            if ($TOCuseLinking) {
+			                $html .= '</a>';
+			            }
+			
+			            if (!$tocoutdent) {
+			                $tocoutdent = '0';
+			            }
+			
+			            if ($TOCusePaging) {
+			                $html .= ' <dottab outdent="' . $tocoutdent . '" /> ';
+			
+			                if ($TOCuseLinking) {
+			                    $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_' . $t['link'] . '">';
+			                }
+			
+			                $html .= '<span class="mpdf_toc_p_level_' . $t['l'] . '">' . 
+			                         $this->mpdf->docPageNum($t['p']) . 
+			                         '</span>';
+			
+			                if ($TOCuseLinking) {
+			                    $html .= '</a>';
+			                }
+			            }
+			
+			            $html .= '</div>';
+			        }
+			    }
+			
+			    $this->mpdf->WriteHTML($html);
 			}
-			$html .= '</div>';
-			$this->mpdf->WriteHTML($html);
+			
+			$this->mpdf->WriteHTML('</div>');
 
 			if (isset($toc_postHTML) && $toc_postHTML) {
 				$this->mpdf->WriteHTML($toc_postHTML);
